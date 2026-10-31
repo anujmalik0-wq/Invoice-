@@ -1,0 +1,46 @@
+name: Convert HTML to APK
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16.x'
+
+    - name: Install Cordova & Build Tools
+      run: |
+        npm install -g cordova
+
+    - name: Create Cordova Project
+      run: |
+        cordova create myApp com.example.myapp MyApp
+        cd myApp
+        cordova platform add android
+
+    - name: Copy HTML files to Cordova
+      run: |
+        rm -rf myApp/www/*
+        cp -r *.html css js images myApp/www/ 2>/dev/null || :
+        cp index.html myApp/www/
+
+    - name: Build Android APK
+      run: |
+        cd myApp
+        cordova build android --release
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: my-android-apk
+        path: myApp/platforms/android/app/build/outputs/apk/release/
+        
